@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="OptiTransit — Sistema inteligente de rutas de transporte público urbano en Venezuela. Encuentra qué bus tomar para llegar a tu destino.">
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <title>OptiTransit — Rutas de Transporte Público Venezuela</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- ============ SPLASH ============ -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-icon">
+                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M25 5 L25 20 M25 30 L25 45 M5 25 L20 25 M30 25 L45 25" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="25" cy="25" r="5" fill="white"/>
+                    <circle cx="25" cy="25" r="20" stroke="white" stroke-width="1.5" fill="none" opacity="0.4"/>
+                </svg>
+            </div>
+            <h1 class="splash-title">OptiTransit</h1>
+            <p class="splash-subtitle">Tu Guía de Transporte Público</p>
+            <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+        </div>
+    </div>
+
+    <!-- ============ LOCATION PERMISSION ============ -->
+    <div id="location-screen" class="location-screen hidden">
+        <div class="location-icon-wrap">
+            <i data-lucide="map-pin"></i>
+        </div>
+        <h2>Activa tu Ubicación</h2>
+        <p>OptiTransit necesita tu ubicación para encontrar rutas y buses cercanos en toda Venezuela.</p>
+        <div class="location-detected" id="location-detected">
+            <i data-lucide="check-circle"></i>
+            <span id="detected-city">Detectando...</span>
+        </div>
+        <button class="btn-primary" id="btn-allow-location" style="max-width: 300px;">
+            <i data-lucide="locate"></i>
+            Permitir Ubicación
+        </button>
+        <button class="btn-secondary" id="btn-skip-location" style="max-width: 300px; margin-top: 12px;">
+            Continuar sin ubicación
+        </button>
+    </div>
+
+    <!-- ============ AUTH - LOGIN ============ -->
+    <div id="auth-login" class="auth-screen hidden">
+        <div class="auth-card">
+            <div class="auth-logo"><i data-lucide="navigation"></i></div>
+            <h1 class="auth-title">Bienvenido</h1>
+            <p class="auth-subtitle">Inicia sesión en OptiTransit</p>
+            <button class="btn-help-auth" id="btn-help-login" onclick="document.getElementById('intro-modal').classList.remove('hidden')" title="¿Qué es OptiTransit?">❓ ¿Qué es OptiTransit?</button>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="login-email" class="form-input" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••">
+                </div>
+                <div id="login-error" style="color: #EF4444; font-size: 0.75rem; margin-bottom: 10px; display: none;"></div>
+                <div class="auth-extras">
+                    <label class="remember-me"><input type="checkbox" id="remember-me"> <span data-i18n="rememberMe">Recuérdame</span></label>
+                    <a class="forgot-link" id="forgot-password" data-i18n="forgotPassword">¿Olvidé mi contraseña?</a>
+                </div>
+                <button class="btn-primary" id="btn-login">
+                    <i data-lucide="log-in"></i>
+                    <span data-i18n="loginBtn">Iniciar Sesión</span>
+                </button>
+            </div>
+            <div class="auth-toggle">
+                ¿No tienes cuenta? <a id="goto-register">Regístrate</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ AUTH - REGISTER ============ -->
+    <div id="auth-register" class="auth-screen hidden">
+        <div class="auth-card">
+            <div class="auth-logo"><i data-lucide="navigation"></i></div>
+            <h1 class="auth-title">Crear Cuenta</h1>
+            <p class="auth-subtitle">Únete a OptiTransit Venezuela</p>
+            <button class="btn-help-auth" id="btn-help-register" onclick="document.getElementById('intro-modal').classList.remove('hidden')" title="¿Qué es OptiTransit?">❓ ¿Qué es OptiTransit?</button>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label>Nombre completo</label>
+                    <input type="text" id="reg-name" class="form-input" placeholder="Ej: Gabriela Montenegro">
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico</label>
+                    <input type="email" id="reg-email" class="form-input" placeholder="tu@correo.com">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono (Venezuela)</label>
+                    <input type="tel" id="reg-phone" class="form-input" placeholder="0412-555-1234">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="reg-password" class="form-input" placeholder="Mínimo 6 caracteres">
+                </div>
+                <div id="reg-error" style="color: #EF4444; font-size: 0.75rem; margin-bottom: 10px; display: none;"></div>
+                <div class="terms-check">
+                    <input type="checkbox" id="accept-terms">
+                    <span>Acepto los <a id="show-terms">Términos y Condiciones</a> y la Política de Privacidad</span>
+                </div>
+                <button class="btn-primary" id="btn-register">
+                    <i data-lucide="user-plus"></i>
+                    Crear Cuenta
+                </button>
+            </div>
+            <div class="auth-toggle">
+                ¿Ya tienes cuenta? <a id="goto-login">Inicia sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ APP ============ -->
+    <div id="app" class="app hidden">
+
+        <header class="app-header" id="app-header">
+            <div class="header-left">
+                <div class="header-logo"><i data-lucide="navigation" class="header-logo-icon"></i></div>
+                <div>
+                    <h1 class="header-title">OptiTransit</h1>
+                    <p class="header-subtitle">Transporte Público</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="theme-toggle" id="btn-theme" aria-label="Modo oscuro">🌙</button>
+                <button class="header-btn" id="btn-help" aria-label="Ayuda" title="¿Cómo funciona?">
+                    <i data-lucide="help-circle"></i>
+                </button>
+                <button class="header-btn" id="btn-notifications" aria-label="Notificaciones">
+                    <i data-lucide="bell"></i>
+                    <span class="notification-badge" id="notif-badge">3</span>
+                </button>
+                <div class="header-avatar" id="btn-profile-header">
+                    <i data-lucide="user"></i>
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main" id="app-main">
+
+            <!-- ====== HOME ====== -->
+            <section class="page active" id="page-home">
+                <div class="user-location-bar" id="user-location-bar">
+                    <i data-lucide="map-pin"></i>
+                    <span>📍 Ubicación: <span class="city-name" id="current-city">Detectando...</span></span>
+                </div>
+
+                <!-- Search -->
+                <div class="search-bar" id="search-bar-home">
+                    <i data-lucide="search"></i>
+                    <input type="text" placeholder="¿A dónde quieres ir?" id="search-destination" readonly>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card" data-animate="fade-up" data-delay="0">
+                        <div class="stat-icon stat-icon-blue"><i data-lucide="route"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-routes">0</span>
+                            <span class="stat-label">Rutas Activas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" data-animate="fade-up" data-delay="100">
+                        <div class="stat-icon stat-icon-cyan"><i data-lucide="bus"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-vehicles">0</span>
+                            <span class="stat-label">Buses en Servicio</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" data-animate="fade-up" data-delay="200">
+                        <div class="stat-icon stat-icon-green"><i data-lucide="map-pinned"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-stops">0</span>
+                            <span class="stat-label">Paradas</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" data-animate="fade-up" data-delay="300">
+                        <div class="stat-icon stat-icon-purple"><i data-lucide="users"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="stat-users">0</span>
+                            <span class="stat-label">Usuarios Hoy</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map -->
+                <div class="section-card map-section" data-animate="fade-up" data-delay="400">
+                    <div class="section-header">
+                        <h2><i data-lucide="map-pin"></i> Mapa en Tiempo Real</h2>
+                        <button class="btn-icon" id="btn-locate" aria-label="Mi ubicación"><i data-lucide="locate"></i></button>
+                    </div>
+                    <div class="map-container" id="map"></div>
+                </div>
+
+                <!-- Buses Nearby -->
+                <div class="section-card" data-animate="fade-up" data-delay="500">
+                    <div class="section-header">
+                        <h2><i data-lucide="bus"></i> <span data-i18n="busesNearby">Buses Públicos Cercanos</span></h2>
+                        <span class="badge badge-blue" data-i18n="live">En vivo</span>
+                    </div>
+
+                    <!-- City Filter -->
+                    <div class="city-filter" id="city-filter"></div>
+
+                    <!-- Currency selector -->
+                    <div class="currency-selector" id="currency-selector">
+                        <button class="currency-btn active" data-currency="usd">USD $</button>
+                        <button class="currency-btn" data-currency="eur">EUR €</button>
+                        <button class="currency-btn" data-currency="usdt">USDT</button>
+                        <button class="currency-btn" data-currency="bs">Bs.</button>
+                    </div>
+
+                    <div class="routes-list" id="buses-list"></div>
+                </div>
+            </section>
+
+            <!-- ====== ROUTES / OPTIMIZER ====== -->
+            <section class="page" id="page-routes">
+                <div class="page-title-bar">
+                    <h2>Buscar Ruta</h2>
+                    <p>Encuentra qué transporte público tomar para llegar a tu destino</p>
+                </div>
+
+                <div class="section-card" data-animate="fade-up">
+                    <div class="form-group">
+                        <label><i data-lucide="circle-dot" class="form-icon origin"></i> ¿Dónde estás?</label>
+                        <input type="text" id="input-origin" placeholder="Ej: Valencia, Centro" class="form-input">
+                    </div>
+                    <div class="route-connector">
+                        <div class="connector-line"></div>
+                        <button class="btn-swap" id="btn-swap"><i data-lucide="arrow-up-down"></i></button>
+                    </div>
+                    <div class="form-group">
+                        <label><i data-lucide="map-pin" class="form-icon destination"></i> ¿A dónde vas?</label>
+                        <input type="text" id="input-destination" placeholder="Ej: Caracas, Plaza Venezuela" class="form-input">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prioridad</label>
+                            <select id="select-priority" class="form-select">
+                                <option value="time">⚡ Menor Tiempo</option>
+                                <option value="distance">📏 Menor Distancia</option>
+                                <option value="cost">💰 Menor Costo</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Moneda</label>
+                            <select id="select-currency-route" class="form-select">
+                                <option value="usd">USD $</option>
+                                <option value="eur">EUR €</option>
+                                <option value="usdt">USDT</option>
+                                <option value="bs">Bs.</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btn-optimize">
+                        <i data-lucide="sparkles"></i> Buscar Rutas
+                    </button>
+                </div>
+
+                <div class="section-card route-result hidden" id="route-result">
+                    <div class="section-header">
+                        <h2><i data-lucide="check-circle"></i> Ruta Óptima</h2>
+                        <span class="badge badge-green">Optimizada</span>
+                    </div>
+                    <div class="result-map-container" id="result-map"></div>
+                    <div class="result-stats">
+                        <div class="result-stat"><i data-lucide="clock"></i><span class="result-stat-value" id="result-time">--</span><span class="result-stat-label">Tiempo</span></div>
+                        <div class="result-stat"><i data-lucide="ruler"></i><span class="result-stat-value" id="result-distance">--</span><span class="result-stat-label">Distancia</span></div>
+                        <div class="result-stat"><i data-lucide="wallet"></i><span class="result-stat-value" id="result-cost">--</span><span class="result-stat-label">Costo</span></div>
+                        <div class="result-stat"><i data-lucide="leaf"></i><span class="result-stat-value" id="result-co2">--</span><span class="result-stat-label">CO₂</span></div>
+                    </div>
+                    <div class="route-steps" id="route-steps"></div>
+                </div>
+            </section>
+
+            <!-- ====== TRACKING ====== -->
+            <section class="page" id="page-tracking">
+                <div class="page-title-bar">
+                    <h2>Rastreo en Vivo</h2>
+                    <p>Buses de transporte público moviéndose en tiempo real</p>
+                </div>
+                <div class="section-card map-section" data-animate="fade-up">
+                    <div class="map-container" id="tracking-map" style="height: 320px;"></div>
+                </div>
+                <div class="section-card" data-animate="fade-up" data-delay="100">
+                    <div class="section-header">
+                        <h2><i data-lucide="bus"></i> Flota de Transporte Público</h2>
+                        <span class="badge badge-cyan" id="vehicles-online">0 en línea</span>
+                    </div>
+                    <div class="vehicles-list" id="vehicles-list"></div>
+                </div>
+            </section>
+
+            <!-- ====== PROFILE ====== -->
+            <section class="page" id="page-profile">
+                <div class="page-title-bar">
+                    <h2>Mi Perfil</h2>
+                    <p>Gestiona tu cuenta y revisa tu historial</p>
+                </div>
+
+                <!-- Profile Card -->
+                <div class="section-card profile-card" data-animate="fade-up">
+                    <div class="profile-header">
+                        <div class="profile-avatar-large" id="profile-avatar-wrap">
+                            <i data-lucide="user" id="profile-avatar-icon"></i>
+                            <img id="profile-avatar-img" src="" alt="" style="display:none;">
+                            <label class="profile-photo-edit" for="photo-upload">📷</label>
+                            <input type="file" id="photo-upload" accept="image/*" style="display:none;">
+                        </div>
+                        <div class="profile-info-main">
+                            <h3 id="profile-name">Usuario</h3>
+                            <p id="profile-email">correo@ejemplo.com</p>
+                            <p id="profile-phone" class="profile-phone">0412-000-0000</p>
+                        </div>
+                    </div>
+                    <div class="profile-stats-row">
+                        <div class="profile-stat">
+                            <span class="profile-stat-value" id="profile-trips">0</span>
+                            <span class="profile-stat-label">Viajes</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-value" id="profile-spent">$0</span>
+                            <span class="profile-stat-label">Gastado</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-value" id="profile-km">0 km</span>
+                            <span class="profile-stat-label">Recorrido</span>
+                        </div>
+                        <div class="profile-stat">
+                            <span class="profile-stat-value" id="profile-since">--</span>
+                            <span class="profile-stat-label">Miembro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Profile -->
+                <div class="section-card" data-animate="fade-up" data-delay="100">
+                    <div class="section-header">
+                        <h2><i data-lucide="pencil"></i> Editar Perfil</h2>
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre completo</label>
+                        <input type="text" id="edit-name" class="form-input" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="edit-phone" class="form-input" placeholder="0412-555-1234">
+                    </div>
+                    <div class="form-group">
+                        <label>Nueva contraseña (dejar vacío para no cambiar)</label>
+                        <input type="password" id="edit-password" class="form-input" placeholder="••••••••">
+                    </div>
+                    <div id="edit-success" class="edit-success hidden">
+                        <i data-lucide="check-circle"></i> Perfil actualizado correctamente
+                    </div>
+                    <button class="btn-primary" id="btn-save-profile">
+                        <i data-lucide="save"></i> Guardar Cambios
+                    </button>
+                </div>
+
+                <!-- Trip History -->
+                <div class="section-card" data-animate="fade-up" data-delay="200">
+                    <div class="section-header">
+                        <h2><i data-lucide="history"></i> Historial de Viajes</h2>
+                        <span class="badge badge-blue" id="trip-count-badge">0 viajes</span>
+                    </div>
+                    <div class="trips-list" id="trips-list">
+                        <div class="empty-trips">
+                            <i data-lucide="map"></i>
+                            <p>Aún no tienes viajes registrados</p>
+                            <span>Solicita un bus para comenzar tu historial</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Location -->
+                <div class="section-card" data-animate="fade-up" data-delay="300">
+                    <div class="section-header">
+                        <h2><i data-lucide="share-2"></i> <span data-i18n="shareLocation">Compartir Ubicación</span></h2>
+                    </div>
+                    <button class="btn-share" id="btn-share-location">
+                        📍 <span data-i18n="shareLocationBtn">Compartir mi ubicación actual</span>
+                    </button>
+                </div>
+
+                <!-- Actions -->
+                <div class="section-card" data-animate="fade-up" data-delay="400">
+                    <button class="btn-logout" id="btn-logout">
+                        <i data-lucide="log-out"></i> <span data-i18n="logout">Cerrar Sesión</span>
+                    </button>
+                </div>
+            </section>
+
+        </main>
+
+        <nav class="bottom-nav" id="bottom-nav">
+            <button class="nav-item active" data-page="home" id="nav-home"><i data-lucide="layout-dashboard"></i><span>Inicio</span></button>
+            <button class="nav-item" data-page="routes" id="nav-routes"><i data-lucide="route"></i><span>Rutas</span></button>
+            <button class="nav-item" data-page="tracking" id="nav-tracking"><i data-lucide="radar"></i><span>Rastreo</span></button>
+            <button class="nav-item" data-page="profile" id="nav-profile"><i data-lucide="user-circle"></i><span>Perfil</span></button>
+        </nav>
+    </div>
+
+    <!-- ============ MODAL: BUS REQUEST ============ -->
+    <div class="modal-overlay hidden" id="modal-bus">
+        <div class="modal-sheet">
+            <div class="modal-handle"></div>
+            <div id="modal-bus-content">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ NOTIFICATION PANEL ============ -->
+    <div class="notification-panel hidden" id="notification-panel">
+        <div class="notification-overlay" id="notification-overlay"></div>
+        <div class="notification-sheet">
+            <div class="notification-handle"></div>
+            <h3>Notificaciones</h3>
+            <div class="notification-list">
+                <div class="notification-item unread">
+                    <div class="notification-dot"></div>
+                    <div class="notification-content">
+                        <p class="notification-text">Ruta <strong>R-042</strong> optimizada. Ahorro de 12 min.</p>
+                        <span class="notification-time">Hace 5 min</span>
+                    </div>
+                </div>
+                <div class="notification-item unread">
+                    <div class="notification-dot"></div>
+                    <div class="notification-content">
+                        <p class="notification-text">Bus <strong>R-005</strong> disponible en tu zona.</p>
+                        <span class="notification-time">Hace 15 min</span>
+                    </div>
+                </div>
+                <div class="notification-item unread">
+                    <div class="notification-dot"></div>
+                    <div class="notification-content">
+                        <p class="notification-text">Nueva ruta pública en <strong>Valencia</strong> disponible.</p>
+                        <span class="notification-time">Hace 32 min</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Intro Modal (for auth screens - different from in-app help) -->
+    <div class="help-modal hidden" id="intro-modal" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2>🚌 ¿Qué es OptiTransit?</h2>
+                <button class="help-close" onclick="document.getElementById('intro-modal').classList.add('hidden')">✕</button>
+            </div>
+            <div class="intro-hero">
+                <div class="intro-hero-icon">🇻🇪</div>
+                <p class="intro-hero-text">La app de transporte público inteligente para Venezuela</p>
+            </div>
+            <div class="help-body">
+                <div class="help-section">
+                    <div class="help-icon">📱</div>
+                    <div>
+                        <h3>¿Para qué sirve OptiTransit?</h3>
+                        <p>OptiTransit es una aplicación diseñada para resolver el problema del transporte público en Venezuela. Muchas personas no saben qué bus tomar, cuánto cuesta el pasaje o en qué parada esperar. Esta app te da toda esa información en un solo lugar para que <strong>te muevas por la ciudad de forma segura y sin perderte</strong>.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">✍️</div>
+                    <div>
+                        <h3>¿Cómo empiezo a usar la app?</h3>
+                        <p>Es muy fácil y rápido:<br><strong>1.</strong> Presiona <strong>"Regístrate"</strong> en la parte de abajo.<br><strong>2.</strong> Escribe tu nombre, correo electrónico y una contraseña.<br><strong>3.</strong> Acepta los términos y condiciones.<br><strong>4.</strong> ¡Listo! Tu cuenta se crea al instante y ya puedes usar toda la app.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🔐</div>
+                    <div>
+                        <h3>¿Ya tienes una cuenta creada?</h3>
+                        <p>Si ya te registraste antes, solo tienes que escribir tu <strong>correo electrónico</strong> y tu <strong>contraseña</strong> en los campos de arriba y presionar <strong>"Iniciar Sesión"</strong>. También puedes marcar "Recuérdame" para que el correo se guarde automáticamente.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">📍</div>
+                    <div>
+                        <h3>¿Por qué muestra los buses y conductores?</h3>
+                        <p>La app te muestra los buses cercanos con el <strong>nombre del conductor y su teléfono</strong> para que sepas <strong>quién te va a transportar</strong>. Esto te da seguridad y confianza, porque sabes a quién llamar si necesitas coordinar el viaje o si te pierdes en el camino.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">💰</div>
+                    <div>
+                        <h3>¿Por qué muestra los precios?</h3>
+                        <p>En Venezuela se usan varias monedas para pagar el transporte. La app te muestra el precio en <strong>Dólares, Euros, USDT y Bolívares</strong> para que sepas exactamente <strong>cuánto vas a pagar antes de subirte al bus</strong>. Así evitas sorpresas y puedes preparar tu dinero con anticipación.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🗺️</div>
+                    <div>
+                        <h3>¿Para qué sirven las rutas?</h3>
+                        <p>Cada bus tiene una ruta específica con un <strong>punto de salida y un punto de llegada</strong>. La app te muestra estas rutas para que sepas <strong>si ese bus te lleva a donde necesitas ir</strong>. También te dice cuántas paradas hace y la distancia total del recorrido, para que planifiques tu viaje.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🔔</div>
+                    <div>
+                        <h3>¿Para qué sirven los horarios?</h3>
+                        <p>Los buses tienen horarios de salida programados durante todo el día. La app te los muestra para que <strong>sepas a qué hora sale el próximo bus</strong> y no pierdas tiempo esperando. Además, puedes <strong>activar un aviso</strong> que te recuerde salir de tu casa a tiempo para llegar a la parada.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">⭐</div>
+                    <div>
+                        <h3>¿Para qué sirven los favoritos?</h3>
+                        <p>Si usas siempre el mismo bus para ir al trabajo, la universidad o tu casa, puedes <strong>marcarlo como favorito</strong>. Así no tienes que buscarlo cada vez que abras la app — <strong>aparece primero en tu lista</strong> y ahorras tiempo.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="document.getElementById('intro-modal').classList.add('hidden')" style="margin-top:16px;">¡Entendido, quiero empezar!</button>
+        </div>
+    </div>
+
+    <!-- Help Modal (for inside the app) -->
+    <div class="help-modal hidden" id="help-modal">
+        <div class="help-modal-content">
+            <div class="help-modal-header">
+                <h2>❓ ¿Cómo funciona OptiTransit?</h2>
+                <button class="help-close" id="help-close" onclick="document.getElementById('help-modal').classList.add('hidden')">✕</button>
+            </div>
+            <div class="help-body">
+                <div class="help-section">
+                    <div class="help-icon">🗺️</div>
+                    <div>
+                        <h3>Mapa en Tiempo Real</h3>
+                        <p>En la pantalla de <strong>Inicio</strong> verás un mapa con todos los buses disponibles en tu zona. Los marcadores 🚌 muestran la ubicación de cada bus.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🚌</div>
+                    <div>
+                        <h3>Solicitar un Bus</h3>
+                        <p>Debajo del mapa están las tarjetas de buses. <strong>Toca una tarjeta</strong> para ver los detalles: ruta, conductor, precio, horarios y método de pago. Presiona <strong>"Confirmar y Pagar"</strong> para solicitar.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🔔</div>
+                    <div>
+                        <h3>Horarios y Avisos</h3>
+                        <p>Dentro del detalle de un bus verás los <strong>horarios de salida</strong>. Toca un horario para <strong>activar un aviso</strong> que te recuerde ir a la parada antes de que salga el bus.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">⭐</div>
+                    <div>
+                        <h3>Favoritos</h3>
+                        <p>Cada bus tiene una <strong>estrella ☆</strong> en la tarjeta. Tócala para marcar ese bus como favorito y encontrarlo más rápido.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🏙️</div>
+                    <div>
+                        <h3>Filtrar por Ciudad</h3>
+                        <p>Arriba de la lista de buses hay <strong>botones de ciudades</strong>. Toca una ciudad para ver solo los buses de esa zona.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">💰</div>
+                    <div>
+                        <h3>Monedas y Tarifas</h3>
+                        <p>Puedes ver los precios en <strong>USD, EUR, USDT o Bolívares</strong>. Usa el selector de moneda debajo del filtro de ciudades para cambiar.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🔍</div>
+                    <div>
+                        <h3>Buscar Ruta</h3>
+                        <p>Ve a la pestaña <strong>"Rutas"</strong> para buscar cómo llegar de un punto a otro. Escribe origen y destino, y la app te calcula la mejor ruta.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">📡</div>
+                    <div>
+                        <h3>Rastreo en Vivo</h3>
+                        <p>En la pestaña <strong>"Rastreo"</strong> ves todos los vehículos en un mapa con su estado: en servicio, con retraso o fuera de servicio.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">👤</div>
+                    <div>
+                        <h3>Tu Perfil</h3>
+                        <p>En <strong>"Perfil"</strong> puedes cambiar tu nombre, teléfono, contraseña, foto de perfil, ver tu historial de viajes y compartir tu ubicación.</p>
+                    </div>
+                </div>
+                <div class="help-section">
+                    <div class="help-icon">🌙</div>
+                    <div>
+                        <h3>Modo Oscuro</h3>
+                        <p>Toca el botón <strong>🌙/☀️</strong> en la parte superior derecha para cambiar entre modo claro y oscuro.</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-primary" id="help-close-btn" onclick="document.getElementById('help-modal').classList.add('hidden')" style="margin-top:16px;">¡Entendido!</button>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div class="terms-modal hidden" id="terms-modal">
+        <div class="terms-modal-content">
+            <h2>📋 Términos y Condiciones</h2>
+            <p><strong>1. Uso del Servicio:</strong> OptiTransit es una plataforma informativa de rutas de transporte público en Venezuela. El uso de la app implica la aceptación de estos términos.</p>
+            <p><strong>2. Registro:</strong> Al crear una cuenta, el usuario se compromete a proporcionar información veraz. La contraseña es responsabilidad del usuario.</p>
+            <p><strong>3. Privacidad:</strong> La ubicación del usuario se utiliza únicamente para mostrar rutas y buses cercanos. No compartimos datos personales con terceros.</p>
+            <p><strong>4. Tarifas:</strong> Los precios mostrados son estimados basados en distancia. La tarifa final puede variar según el operador de transporte.</p>
+            <p><strong>5. Responsabilidad:</strong> OptiTransit no opera los vehículos. No somos responsables por retrasos, cambios de ruta o incidentes durante el viaje.</p>
+            <p><strong>6. Modificaciones:</strong> Nos reservamos el derecho de modificar estos términos. Se notificará a los usuarios de cambios significativos.</p>
+            <button class="btn-primary" id="close-terms" style="margin-top:16px;">Entendido</button>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="terms-modal hidden" id="forgot-modal">
+        <div class="terms-modal-content">
+            <h2>🔑 Recuperar Contraseña</h2>
+            <p>Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.</p>
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="forgot-email" class="form-input" placeholder="tu@correo.com">
+            </div>
+            <div id="forgot-success" style="display:none;padding:10px;background:rgba(16,185,129,0.08);border-radius:12px;color:#10B981;font-size:0.78rem;font-weight:600;margin-bottom:12px;">✅ Se han enviado las instrucciones a tu correo</div>
+            <button class="btn-primary" id="btn-forgot-send">Enviar Instrucciones</button>
+            <button class="btn-secondary" id="btn-forgot-cancel">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
