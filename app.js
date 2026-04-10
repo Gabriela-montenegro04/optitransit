@@ -586,7 +586,7 @@ function initMaps() {
 
     L.control.zoom({ position: 'topright' }).addTo(AppState.maps.main);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
     }).addTo(AppState.maps.main);
 
@@ -672,7 +672,7 @@ function initTrackingMap() {
         attributionControl: false
     }).setView(center, 12);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19
     }).addTo(AppState.maps.tracking);
 
