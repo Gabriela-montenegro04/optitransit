@@ -24,11 +24,12 @@
     <div id="splash-screen" class="splash-screen">
         <div class="splash-content">
             <div class="splash-icon">
-                <svg viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M25 5 L25 20 M25 30 L25 45 M5 25 L20 25 M30 25 L45 25" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    <circle cx="25" cy="25" r="5" fill="white"/>
-                    <circle cx="25" cy="25" r="20" stroke="white" stroke-width="1.5" fill="none" opacity="0.4"/>
-                </svg>
+                <div class="logo-rings">
+                    <div class="logo-ring ring-1"></div>
+                    <div class="logo-ring ring-2"></div>
+                    <div class="logo-ring ring-3"></div>
+                </div>
+                <div class="logo-bus">🚌</div>
             </div>
             <h1 class="splash-title">OptiTransit</h1>
             <p class="splash-subtitle">Tu Guía de Transporte Público</p>
@@ -59,7 +60,13 @@
     <!-- ============ AUTH - LOGIN ============ -->
     <div id="auth-login" class="auth-screen hidden">
         <div class="auth-card">
-            <div class="auth-logo"><i data-lucide="navigation"></i></div>
+            <div class="auth-logo">
+                <div class="logo-rings auth-rings">
+                    <div class="logo-ring ring-1"></div>
+                    <div class="logo-ring ring-2"></div>
+                </div>
+                <div class="logo-bus">🚌</div>
+            </div>
             <h1 class="auth-title">Bienvenido</h1>
             <p class="auth-subtitle">Inicia sesión en OptiTransit</p>
             <button class="btn-help-auth" id="btn-help-login" onclick="document.getElementById('intro-modal').classList.remove('hidden')" title="¿Qué es OptiTransit?">❓ ¿Qué es OptiTransit?</button>
@@ -91,7 +98,13 @@
     <!-- ============ AUTH - REGISTER ============ -->
     <div id="auth-register" class="auth-screen hidden">
         <div class="auth-card">
-            <div class="auth-logo"><i data-lucide="navigation"></i></div>
+            <div class="auth-logo">
+                <div class="logo-rings auth-rings">
+                    <div class="logo-ring ring-1"></div>
+                    <div class="logo-ring ring-2"></div>
+                </div>
+                <div class="logo-bus">🚌</div>
+            </div>
             <h1 class="auth-title">Crear Cuenta</h1>
             <p class="auth-subtitle">Únete a OptiTransit Venezuela</p>
             <button class="btn-help-auth" id="btn-help-register" onclick="document.getElementById('intro-modal').classList.remove('hidden')" title="¿Qué es OptiTransit?">❓ ¿Qué es OptiTransit?</button>
